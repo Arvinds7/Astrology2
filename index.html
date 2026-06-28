@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI Astrology Pro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #08080f;
+  --surface: #0f0f1a;
+  --card: #13131f;
+  --border: rgba(255,255,255,0.06);
+  --gold: #c9a84c;
+  --gold-light: #e8c96a;
+  --purple: #7c5cbf;
+  --purple-light: #9d7de0;
+  --text: #e8e0ff;
+  --muted: #6b6880;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Starfield ── */
+.stars {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+}
+.stars canvas { width: 100%; height: 100%; }
+
+/* ── Nav ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,8,15,0.6);
+  backdrop-filter: blur(12px);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Cinzel', serif;
+  font-size: 12px; font-weight: 600;
+  color: var(--gold); letter-spacing: 1.5px;
+  cursor: pointer;
+}
+.nav-logo::before { content: '✦'; font-size: 9px; }
+.nav-links { display: flex; gap: 20px; align-items: center; }
+.nav-links a {
+  text-decoration: none; color: var(--muted);
+  font-size: 11px; font-weight: 400; letter-spacing: 0.5px;
+  transition: color 0.2s; cursor: pointer;
+}
+.nav-links a:hover, .nav-links a.active { color: var(--text); }
+.nav-auth {
+  display: flex; gap: 8px; align-items: center;
+}
+.nav-auth button {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 10px; font-family: 'Inter', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+.btn-login {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-login:hover { border-color: var(--gold); color: var(--gold); }
+.btn-signup {
+  background: var(--purple); border: 1px solid var(--purple);
+  color: #fff;
+}
+.btn-signup:hover { background: var(--purple-light); }
+.user-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer; position: relative;
+}
+.user-dropdown {
+  position: absolute; top: 100%; right: 0; margin-top: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; min-width: 160px; display: none;
+  overflow: hidden; z-index: 200;
+}
+.user-dropdown.show { display: block; }
+.user-dropdown a {
+  display: block; padding: 10px 14px; font-size: 11px;
+  color: var(--muted); text-decoration: none; transition: all 0.15s;
+}
+.user-dropdown a:hover { background: rgba(124,92,191,0.1); color: var(--text); }
+.user-dropdown .danger:hover { background: rgba(255,50,50,0.1); color: #ff6b6b; }
+
+/* ── Auth Modal ── */
+.auth-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center;
+}
+.auth-overlay.show { display: flex; }
+.auth-modal {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 30px; width: 90%; max-width: 380px;
+  position: relative;
+}
+.auth-modal h2 {
+  font-family: 'Cinzel', serif; font-size: 18px;
+  color: var(--gold); text-align: center; margin-bottom: 20px;
+}
+.auth-modal .close-btn {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; color: var(--muted);
+  font-size: 20px; cursor: pointer;
+}
+.auth-modal .field {
+  margin-bottom: 14px;
+}
+.auth-modal .field label {
+  display: block; font-size: 10px; color: var(--muted);
+  margin-bottom: 4px; letter-spacing: 0.5px;
+}
+.auth-modal .field input {
+  width: 100%; padding: 10px 12px;
+  background: #1a1a28; border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 13px;
+  outline: none; font-family: 'Inter', sans-serif;
+}
+.auth-modal .field input:focus { border-color: var(--purple); }
+.auth-modal .btn-submit {
+  width: 100%; padding: 10px; margin-top: 10px;
+  background: var(--purple); border: none; border-radius: 10px;
+  color: #fff; font-size: 13px; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: background 0.2s;
+}
+.auth-modal .btn-submit:hover { background: var(--purple-light); }
+.auth-switch {
+  text-align: center; margin-top: 14px; font-size: 11px;
+  color: var(--muted);
+}
+.auth-switch a { color: var(--purple-light); cursor: pointer; text-decoration: none; }
+.auth-error {
+  background: rgba(255,50,50,0.1); border: 1px solid rgba(255,50,50,0.3);
+  border-radius: 8px; padding: 8px 12px; font-size: 11px;
+  color: #ff6b6b; margin-bottom: 12px; display: none;
+}
+
+/* ── Main layout ── */
+main {
+  position: relative;
+  z-index: 10;
+  padding: 70px 16px 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When chat is active */
+main.chat-active {
+  padding-top: 60px;
+  gap: 8px;
+}
+
+main.chat-active .hero-section {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  transition: all 0.4s ease;
+}
+
+main.chat-active .wheel-wrap {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  transition: all 0.4s ease;
+}
+
+main.chat-active .chat-panel {
+  flex: 1;
+  max-height: calc(100vh - 80px);
+  transition: all 0.5s ease;
+}
+
+main.chat-active .chat-messages {
+  max-height: calc(100vh - 180px);
+}
+
+/* ── Hero section ── */
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+  transition: all 0.4s ease;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 9px; font-weight: 500; letter-spacing: 1.5px;
+  color: var(--gold); width: fit-content;
+  margin: 0 auto;
+}
+.badge::before, .badge::after { content: '✦'; font-size: 7px; }
+h1 {
+  font-family: 'Cinzel', serif;
+  font-size: 32px; font-weight: 700; line-height: 1.1;
+  color: var(--gold-light);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.hero-desc {
+  font-size: 12px; line-height: 1.7; color: var(--muted);
+  font-weight: 300;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.cta-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 18px;
+  border: 1px solid var(--gold);
+  border-radius: 30px;
+  background: rgba(201,168,76,0.08);
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  cursor: pointer; transition: all 0.25s; width: fit-content;
+  text-transform: uppercase;
+  margin: 0 auto;
+}
+.cta-btn:hover { background: rgba(201,168,76,0.18); box-shadow: 0 0 20px rgba(201,168,76,0.2); }
+.zodiac-strip {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  font-size: 8px; letter-spacing: 1px; color: var(--muted);
+  text-transform: uppercase;
+  justify-content: center;
+}
+.zodiac-strip span::after { content: ' ·'; }
+.zodiac-strip span:last-child::after { content: ''; }
+
+/* ── Wheel ── */
+.wheel-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 10px 0;
+  transition: all 0.4s ease;
+}
+.wheel-canvas-wrap {
+  position: relative;
+  width: 280px; height: 280px;
+}
+#wheelCanvas {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 30px rgba(124,92,191,0.3));
+}
+.wheel-center-glow {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.wheel-center-glow::before {
+  content: '';
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124,92,191,0.4) 0%, rgba(124,92,191,0.1) 60%, transparent 100%);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+/* ── Chat panel ── */
+.chat-panel {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex; flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.5s ease;
+}
+.chat-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(124,92,191,0.06);
+}
+.chat-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, #7c5cbf, #4a3580);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.chat-header-text h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 11px; font-weight: 600; color: var(--text);
+  letter-spacing: 0.5px;
+}
+.chat-header-text p { font-size: 10px; color: var(--muted); }
+.online-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #4ade80; margin-left: auto; flex-shrink: 0;
+  box-shadow: 0 0 6px #4ade80;
+}
+
+.chat-messages {
+  flex: 1;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  scroll-behavior: smooth;
+  transition: max-height 0.5s ease;
+}
+.chat-messages::-webkit-scrollbar { width: 3px; }
+.chat-messages::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 2px; }
+
+.msg { display: flex; flex-direction: column; gap: 2px; }
+.msg.user { align-items: flex-end; }
+.msg.bot  { align-items: flex-start; }
+.bubble {
+  max-width: 88%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px; line-height: 1.5;
+  word-wrap: break-word;
+}
+.msg.user .bubble {
+  background: var(--purple);
+  color: #fff;
+  border-bottom-right-radius: 3px;
+}
+.msg.bot .bubble {
+  background: #1a1a28;
+  color: #c8c0e0;
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 3px;
+}
+.msg.bot .bubble::before { content: '🔮 '; }
+
+.typing-dots {
+  display: none; align-items: center; gap: 4px;
+  padding: 8px 12px;
+  background: #1a1a28; border: 1px solid var(--border);
+  border-radius: 12px 12px 12px 3px;
+  width: fit-content;
+}
+.typing-dots.show { display: flex; }
+.typing-dots span {
+  width: 5px; height: 5px;
+  background: var(--muted); border-radius: 50%;
+  animation: tdot 1.3s infinite ease-in-out;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes tdot {
+  0%,80%,100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+.quick-chips {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 6px 12px 0;
+}
+.chip {
+  padding: 3px 8px;
+  border: 1px solid rgba(124,92,191,0.35);
+  border-radius: 20px;
+  background: transparent;
+  color: #9d7de0;
+  font-size: 10px; font-family: 'Inter', sans-serif;
+  cursor: pointer; transition: all 0.15s;
+}
+.chip:hover { background: rgba(124,92,191,0.15); border-color: var(--purple-light); color: #c4a8f5; }
+
+.chat-input-row {
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 6px; align-items: center;
+}
+.chat-input-row input {
+  flex: 1; padding: 8px 10px;
+  background: #1a1a28;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text); font-size: 12px; font-family: 'Inter', sans-serif;
+  outline: none; transition: border-color 0.15s;
+}
+.chat-input-row input::placeholder { color: var(--muted); }
+.chat-input-row input:focus { border-color: var(--purple); }
+.chat-input-row button {
+  width: 34px; height: 34px; flex-shrink: 0;
+  border: none; border-radius: 10px;
+  background: var(--purple);
+  color: #fff; font-size: 13px;
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.chat-input-row button:hover { background: var(--purple-light); }
+.chat-input-row button:active { transform: scale(0.93); }
+.chat-input-row button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ── Responsive ── */
+@media (min-width: 768px) {
+  main {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 40px 20px;
+    gap: 30px;
+  }
+  main.chat-active {
+    flex-direction: row;
+    gap: 30px;
+  }
+  main.chat-active .hero-section {
+    max-height: none;
+    opacity: 1;
+    overflow: visible;
+    flex: 0 0 280px;
+  }
+  main.chat-active .wheel-wrap {
+    max-height: none;
+    opacity: 1;
+    overflow: visible;
+  }
+  .hero-section {
+    flex: 0 0 280px;
+    text-align: left;
+  }
+  .badge, .cta-btn, .zodiac-strip { margin: 0; }
+  .hero-desc { margin: 0; }
+  h1 { font-size: 38px; }
+  .wheel-canvas-wrap { width: 320px; height: 320px; }
+  .chat-panel { flex: 0 0 320px; height: calc(100vh - 100px); max-height: 550px; }
+  .chat-messages { max-height: none; }
+  main.chat-active .chat-panel { flex: 0 0 320px; }
+  main.chat-active .chat-messages { max-height: none; }
+}
+
+@media (min-width: 1024px) {
+  .hero-section { flex: 0 0 320px; }
+  h1 { font-size: 42px; }
+  .wheel-canvas-wrap { width: 380px; height: 380px; }
+  .chat-panel { flex: 0 0 340px; }
+}
+</style>
+</head>
+<body>
+
+<div class="stars"><canvas id="starsCanvas"></canvas></div>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <div class="nav-logo" onclick="location.reload()">AI Astrology Pro</div>
+  <div class="nav-links">
+    <a href="#" class="active" onclick="showSection('home')">Home</a>
+    <a href="#" onclick="showSection('chat')">AI Chat</a>
+    <a href="#" onclick="showSection('horoscope')">Horoscope</a>
+    <a href="#" onclick="showSection('compatibility')">Love Match</a>
+    <a href="#" onclick="showSection('history')">History</a>
+    <div class="nav-auth" id="navAuth">
+      <button class="btn-login" onclick="openAuth('login')">Login</button>
+      <button class="btn-signup" onclick="openAuth('signup')">Create Account</button>
+    </div>
+    <div class="user-avatar" id="userAvatar" style="display:none" onclick="toggleUserMenu()">
+      🔮
+      <div class="user-dropdown" id="userDropdown">
+        <a href="#" onclick="showSection('history')">📜 Chat History</a>
+        <a href="#" onclick="showSection('horoscope')">🔮 Horoscope</a>
+        <a href="#" onclick="showSection('compatibility')">💞 Love Match</a>
+        <a href="#" class="danger" onclick="logout()">🚪 Sign Out</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── AUTH MODAL ─── -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-modal">
+    <button class="close-btn" onclick="closeAuth()">✕</button>
+    <h2 id="authTitle">Create Account</h2>
+    <div class="auth-error" id="authError"></div>
+    <div id="authFields">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="authName" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••">
+      </div>
+    </div>
+    <button class="btn-submit" id="authSubmit" onclick="submitAuth()">Create Account</button>
+    <div class="auth-switch" id="authSwitch">
+      <span id="switchText">Already have an account?</span>
+      <a id="switchLink" onclick="switchAuth()">Login</a>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MAIN ─── -->
+<main id="mainContent">
+  <!-- Hero Section -->
+  <div class="hero-section" id="heroSection">
+    <div class="badge">Powered by Artificial Intelligence</div>
+    <h1>Discover<br>Your<br>Destiny</h1>
+    <p class="hero-desc">Unlock the ancient wisdom of the stars with AI-generated personalized birth charts, planetary insights, and cosmic guidance tailored to your unique soul journey.</p>
+    <button class="cta-btn" onclick="startReading()">✦ Start Reading</button>
+    <div class="zodiac-strip">
+      <span>Aries</span><span>Taurus</span><span>Gemini</span><span>Cancer</span>
+      <span>Leo</span><span>Virgo</span><span>Libra</span><span>Scorpio</span>
+      <span>Sagittarius</span><span>Capricorn</span><span>Aquarius</span><span>Pisces</span>
+    </div>
+  </div>
+
+  <!-- Wheel -->
+  <div class="wheel-wrap" id="wheelWrap">
+    <div class="wheel-canvas-wrap">
+      <canvas id="wheelCanvas"></canvas>
+      <div class="wheel-center-glow"></div>
+    </div>
+  </div>
+
+  <!-- Chat Panel -->
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+      <div class="chat-avatar">🔮</div>
+      <div class="chat-header-text">
+        <h3>Cosmic Guide</h3>
+        <p>Online • Astrology Only</p>
+      </div>
+      <div class="online-dot"></div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg bot">
+        <div class="bubble">Welcome, seeker! ✨ I'm your astrology guide. I can only answer questions about horoscopes, zodiac signs, birth charts, planets, and cosmic wisdom. Ask me anything astrology-related! 🔮</div>
+      </div>
+    </div>
+
+    <div class="quick-chips" id="chips">
+      <button class="chip" onclick="useChip(this)">What's my zodiac?</button>
+      <button class="chip" onclick="useChip(this)">Daily horoscope</button>
+      <button class="chip" onclick="useChip(this)">Love compatibility</button>
+      <button class="chip" onclick="useChip(this)">Career reading</button>
+    </div>
+
+    <div class="typing-dots" id="typingDots">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" placeholder="Ask about astrology..." autocomplete="off">
+      <button id="sendBtn" onclick="sendMsg()">➤</button>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ─── Starfield ─── */
+(function(){
+  const c = document.getElementById('starsCanvas');
+  const ctx = c.getContext('2d');
+  let stars = [];
+  function resize(){
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  for(let i=0;i<180;i++){
+    stars.push({
+      x: Math.random()*c.width,
+      y: Math.random()*c.height,
+      r: Math.random()*1.2+0.3,
+      a: Math.random()*Math.PI*2,
+      s: Math.random()*0.002+0.001
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      s.a += s.s;
+      s.x += Math.cos(s.a)*0.15;
+      s.y += Math.sin(s.a)*0.15;
+      if(s.x<0) s.x=c.width;
+      if(s.x>c.width) s.x=0;
+      if(s.y<0) s.y=c.height;
+      if(s.y>c.height) s.y=0;
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(200,190,255,${0.3+Math.sin(s.a)*0.2})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ─── Astrology Wheel ─── */
+(function(){
+  const canvas = document.getElementById('wheelCanvas');
+  const ctx = canvas.getContext('2d');
+  let rot = 0;
+  const signs = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  const planets = [
+    { angle:0,   r:100, size:3, color:'rgb(255,200,50)' },
+    { angle:45,  r:80,  size:2.5, color:'rgb(200,150,255)' },
+    { angle:120, r:110, size:2, color:'rgb(100,200,255)' },
+    { angle:200, r:90,  size:3.5, color:'rgb(255,100,100)' },
+    { angle:300, r:70,  size:2, color:'rgb(100,255,150)' }
+  ];
+
+  function resize(){
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function draw(){
+    const w = canvas.width / window.devicePixelRatio;
+    const h = canvas.height / window.devicePixelRatio;
+    const cx = w/2, cy = h/2;
+    const r = Math.min(w,h)/2 - 10;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle = 'rgba(201,168,76,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.75,0,Math.PI*2);
+    ctx.strokeStyle = 'rgba(124,92,191,0.3)'; ctx.lineWidth = 0.6; ctx.stroke();
+
+    for(let i=0;i<12;i++){
+      const a = rot + (i/12)*Math.PI*2 - Math.PI/2;
+      const x1 = cx + r*0.75*Math.cos(a), y1 = cy + r*0.75*Math.sin(a);
+      const x2 = cx + r*Math.cos(a), y2 = cy + r*Math.sin(a);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.strokeStyle = 'rgba(201,168,76,0.2)'; ctx.lineWidth = 0.6; ctx.stroke();
+
+      const ma = rot + (i+0.5)/12*Math.PI*2 - Math.PI/2;
+      const sx = cx + r*0.87*Math.cos(ma), sy = cy + r*0.87*Math.sin(ma);
+      ctx.save();
+      ctx.translate(sx,sy);
+      ctx.font = `${r*0.07}px serif`;
+      ctx.fillStyle = 'rgba(201,168,76,0.85)';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(signs[i],0,0);
+      ctx.restore();
+    }
+
+    for(let i=0;i<12;i++){
+      const a = rot + (i/12)*Math.PI*2 - Math.PI/2;
+      ctx.beginPath(); ctx.moveTo(cx,cy);
+      ctx.lineTo(cx + r*0.7*Math.cos(a), cy + r*0.7*Math.sin(a));
+      ctx.strokeStyle = 'rgba(124,92,191,0.06)'; ctx.lineWidth = 0.4; ctx.stroke();
+    }
+
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.45,0,Math.PI*2);
+    ctx.fillStyle = '#0a0a14'; ctx.fill();
+    ctx.strokeStyle = 'rgba(124,92,191,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+
+    const cg = ctx.createRadialGradient(cx,cy,0,cx,cy,r*0.4);
+    cg.addColorStop(0,'rgba(124,92,191,0.3)');
+    cg.addColorStop(0.5,'rgba(80,50,150,0.12)');
+    cg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(cx,cy,r*0.4,0,Math.PI*2);
+    ctx.fillStyle=cg; ctx.fill();
+
+    ctx.font = `${r*0.15}px serif`;
+    ctx.fillStyle = 'rgba(201,168,76,0.85)';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('✦', cx, cy);
+
+    const pt = Date.now()/14000;
+    planets.forEach(p=>{
+      const a = (p.angle*Math.PI/180) + pt;
+      const px = cx + p.r*(r/150)*Math.cos(a);
+      const py = cy + p.r*(r/150)*Math.sin(a);
+      const pg = ctx.createRadialGradient(px,py,0,px,py,p.size*3);
+      pg.addColorStop(0, p.color.replace(')',',0.4)').replace('rgb','rgba'));
+      pg.addColorStop(1,'transparent');
+      ctx.beginPath(); ctx.arc(px,py,p.size*3,0,Math.PI*2);
+      ctx.fillStyle=pg; ctx.fill();
+      ctx.beginPath(); ctx.arc(px,py,p.size,0,Math.PI*2);
+      ctx.fillStyle=p.color; ctx.fill();
+    });
+
+    rot += 0.002;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ─── AUTH SYSTEM ─── */
+let currentAuthMode = 'signup';
+let currentUser = null;
+
+(function() {
+  const saved = localStorage.getItem('astro_user');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      updateUI();
+    } catch(e) {}
+  }
+})();
+
+function openAuth(mode) {
+  currentAuthMode = mode;
+  document.getElementById('authOverlay').classList.add('show');
+  
+  if (mode === 'login') {
+    document.getElementById('authTitle').textContent = 'Login';
+    document.getElementById('authSubmit').textContent = 'Login';
+    document.getElementById('switchText').textContent = "Don't have an account?";
+    document.getElementById('switchLink').textContent = 'Create Account';
+  } else {
+    document.getElementById('authTitle').textContent = 'Create Account';
+    document.getElementById('authSubmit').textContent = 'Create Account';
+    document.getElementById('switchText').textContent = 'Already have an account?';
+    document.getElementById('switchLink').textContent = 'Login';
+  }
+  
+  document.getElementById('authError').style.display = 'none';
+  document.getElementById('authName').value = '';
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authPassword').value = '';
+}
+
+function closeAuth() {
+  document.getElementById('authOverlay').classList.remove('show');
+}
+
+function switchAuth() {
+  openAuth(currentAuthMode === 'login' ? 'signup' : 'login');
+}
+
+function submitAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('authName').value.trim();
+  const errorEl = document.getElementById('authError');
+
+  if (!email || !password) {
+    errorEl.textContent = '⚠ Please fill in all fields.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  if (currentAuthMode === 'signup' && !name) {
+    errorEl.textContent = '⚠ Please enter your name.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  let users = {};
+  try {
+    users = JSON.parse(localStorage.getItem('astro_users') || '{}');
+  } catch(e) {}
+
+  if (currentAuthMode === 'signup') {
+    if (users[email]) {
+      errorEl.textContent = '⚠ An account with this email already exists. Please login.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    
+    users[email] = {
+      name: name,
+      password: btoa(password),
+      created: Date.now()
+    };
+    localStorage.setItem('astro_users', JSON.stringify(users));
+    
+    currentUser = {
+      name: name,
+      email: email,
+      avatar: '🔮'
+    };
+  } else {
+    const user = users[email];
+    if (!user || user.password !== btoa(password)) {
+      errorEl.textContent = '⚠ Invalid email or password.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    
+    currentUser = {
+      name: user.name,
+      email: email,
+      avatar: '🔮'
+    };
+  }
+
+  localStorage.setItem('astro_user', JSON.stringify(currentUser));
+  
+  updateUI();
+  closeAuth();
+  
+  if (window.pendingStart) {
+    window.pendingStart = false;
+    startChat();
+  }
+}
+
+function updateUI() {
+  if (currentUser) {
+    document.getElementById('navAuth').style.display = 'none';
+    document.getElementById('userAvatar').style.display = 'flex';
+  } else {
+    document.getElementById('navAuth').style.display = 'flex';
+    document.getElementById('userAvatar').style.display = 'none';
+  }
+}
+
+function toggleUserMenu() {
+  document.getElementById('userDropdown').classList.toggle('show');
+}
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem('astro_user');
+  updateUI();
+  document.getElementById('userDropdown').classList.remove('show');
+  location.reload();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.user-avatar')) {
+    document.getElementById('userDropdown').classList.remove('show');
+  }
+});
+
+/* ─── START READING ─── */
+function startReading() {
+  if (currentUser) {
+    startChat();
+  } else {
+    window.pendingStart = true;
+    openAuth('signup');
+  }
+}
+
+/* ─── SECTION NAVIGATION ─── */
+function showSection(section) {
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  if (event && event.target) event.target.classList.add('active');
+
+  if (section === 'home') {
+    location.reload();
+  } else if (section === 'chat') {
+    if (currentUser) {
+      startChat();
+    } else {
+      window.pendingStart = true;
+      openAuth('signup');
+    }
+  } else if (section === 'horoscope') {
+    if (currentUser) {
+      startChat();
+      setTimeout(() => sendMsg('Give me my daily horoscope'), 500);
+    } else {
+      window.pendingStart = true;
+      openAuth('signup');
+    }
+  } else if (section === 'compatibility') {
+    if (currentUser) {
+      startChat();
+      setTimeout(() => sendMsg('Tell me about love compatibility between two people'), 500);
+    } else {
+      window.pendingStart = true;
+      openAuth('signup');
+    }
+  } else if (section === 'history') {
+    if (currentUser) {
+      startChat();
+      setTimeout(() => sendMsg('Show me my chat history'), 500);
+    } else {
+      window.pendingStart = true;
+      openAuth('signup');
+    }
+  }
+}
+
+/* ─── CHAT - ASTROLOGY ONLY ─── */
+const API_KEY = 'zk_live_a7VKafejdCsCa0g5gsZv_SL7g_Mhh0HA';
+const API_URL = 'https://zoroai.online/api/public/v1/chat';
+
+const mainContent = document.getElementById('mainContent');
+const chatMessages = document.getElementById('chatMessages');
+const chatInput   = document.getElementById('chatInput');
+const sendBtn     = document.getElementById('sendBtn');
+const typingDots  = document.getElementById('typingDots');
+
+// ASTROLOGY-ONLY SYSTEM PROMPT - Strictly limits to astrology
+const ASTROLOGY_SYSTEM_PROMPT = `You are an expert astrology AI assistant. You ONLY answer questions about astrology topics including: horoscopes, zodiac signs, birth charts, planetary positions, houses, nakshatras, compatibility, numerology, gemstones, and cosmic wisdom.
+
+IMPORTANT RULES:
+1. ONLY answer astrology-related questions
+2. If a user asks about ANYTHING non-astrology (like coding, math, cooking, sports, politics, general knowledge, etc.), politely refuse and say: "I can only answer astrology-related questions. Please ask me about zodiac signs, horoscopes, birth charts, or other cosmic topics! 🔮"
+3. Be mystical, warm, and concise
+4. Use occasional star emojis
+5. Never break character as an astrology guide`;
+
+let history = [
+  { role:'system', content: ASTROLOGY_SYSTEM_PROMPT }
+];
+let chatStarted = false;
+
+function startChat() {
+  if (!chatStarted) {
+    chatStarted = true;
+    mainContent.classList.add('chat-active');
+    chatInput.focus();
+    document.getElementById('chatPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function useChip(btn) {
+  if (!currentUser) {
+    window.pendingStart = true;
+    openAuth('signup');
+    return;
+  }
+  if (!chatStarted) startChat();
+  chatInput.value = btn.textContent;
+  sendMsg();
+}
+
+function addMsg(text, who) {
+  const d = document.createElement('div');
+  d.className = `msg ${who}`;
+  d.innerHTML = `<div class="bubble">${text}</div>`;
+  chatMessages.appendChild(d);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function sendMsg(msg) {
+  if (!currentUser) {
+    window.pendingStart = true;
+    openAuth('signup');
+    return;
+  }
+  
+  if (!chatStarted) startChat();
+  
+  const message = msg || chatInput.value.trim();
+  if (!message) return;
+  
+  chatInput.disabled = true; sendBtn.disabled = true;
+  if (!msg) chatInput.value = '';
+  
+  addMsg(message, 'user');
+  document.getElementById('chips').innerHTML = '';
+  typingDots.classList.add('show');
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  history.push({ role:'user', content:message });
+
+  try {
+    const res = await fetch(API_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${API_KEY}` },
+      body: JSON.stringify({ messages:history, temperature:0.75, max_tokens:400 })
+    });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    let reply = data.choices?.[0]?.message?.content || data.response || '✨ The stars are aligning — please try again.';
+    
+    typingDots.classList.remove('show');
+    addMsg(reply, 'bot');
+    history.push({ role:'assistant', content:reply });
+  } catch(e) {
+    typingDots.classList.remove('show');
+    addMsg('🌙 The cosmic connection is wavering. Please try again shortly.', 'bot');
+  }
+
+  chatInput.disabled = false; sendBtn.disabled = false; chatInput.focus();
+}
+
+chatInput.addEventListener('focus', () => {
+  if (!currentUser) {
+    chatInput.blur();
+    window.pendingStart = true;
+    openAuth('signup');
+    return;
+  }
+  if (!chatStarted) startChat();
+});
+
+chatInput.addEventListener('keypress', e => { if (e.key==='Enter') sendMsg(); });
+</script>
+</body>
+</html>
